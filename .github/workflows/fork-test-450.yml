@@ -23,23 +23,8 @@ jobs:
           sed -i 's/72/69/g' configure.ac
           ./autogen.sh --with-python3
           make
-      - name: Bundle failures detail (with fix)
+      - name: Bundle failures detail
         run: |
           export PYTHONPATH=$PWD/src NO_AT_BRIDGE=1
-          xvfb-run -a python3 -m unittest tests.test_bundle tests.test_bundlebuilder 2>&1 | grep -vE "^hint:" | grep -E "Error|assert|Assertion|FAIL|ERROR|File \"/home" | sort | uniq -c | sort -rn | head -40
-      - name: Full discover with AT-SPI bus (with fix)
-        run: |
-          sudo apt install -y at-spi2-core dbus-x11 gir1.2-atspi-2.0
-          export PYTHONPATH=$PWD/src
-          cat > /tmp/run.sh <<'EOS'
-          /usr/libexec/at-spi-bus-launcher --launch-immediately &
-          sleep 2
-          python3 -m sugar3.test.discover tests 2>&1 | grep -E "^(Ran |OK|FAILED|ERROR:|FAIL:)|test_connectionmanager|Trace/"
-          echo "DISCOVER_FIX_RC=$?"
-          EOS
-          xvfb-run -a dbus-run-session -- bash /tmp/run.sh || true
-      - name: Full discover with AT-SPI bus (base source)
-        run: |
-          git show 8af47b9:src/sugar3/presence/connectionmanager.py > src/sugar3/presence/connectionmanager.py
-          export PYTHONPATH=$PWD/src
-          xvfb-run -a dbus-run-session -- bash /tmp/run.sh || true
+          xvfb-run -a python3 -m unittest tests.test_bundle tests.test_bundlebuilder.TestGit.test_build_in_source tests.test_bundlebuilder.TestGit.test_install_in_source > /tmp/b.log 2>&1 || true
+          grep -vE "^hint:" /tmp/b.log | cut -c1-220 | head -150
