@@ -23,6 +23,17 @@ jobs:
           sed -i 's/72/69/g' configure.ac
           ./autogen.sh --with-python3
           make
+      - name: Register sugar mime types (environment only)
+        run: |
+          mkdir -p ~/.local/share/mime/packages
+          cat > ~/.local/share/mime/packages/sugar.xml <<'EOX'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+            <mime-type type="application/vnd.olpc-sugar"><comment>Sugar activity bundle</comment><glob pattern="*.xo"/></mime-type>
+            <mime-type type="application/vnd.olpc-content"><comment>Sugar content bundle</comment><glob pattern="*.xol"/></mime-type>
+          </mime-info>
+          EOX
+          update-mime-database ~/.local/share/mime
       - name: Full discover with AT-SPI bus
         run: |
           sudo apt install -y at-spi2-core dbus-x11 gir1.2-atspi-2.0
