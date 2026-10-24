@@ -28,9 +28,11 @@ jobs:
         continue-on-error: true
         run: |
           export PYTHONPATH=$PWD/src
-          python3 -m pyflakes src tests; echo "pyflakes rc=$?"
-          python3 -m pycodestyle src tests | wc -l
-          xvfb-run -a python3 -m sugar3.test.discover $PWD/tests 2>&1 | tee /tmp/fix.log | tail -30
+          python3 -m pyflakes src/sugar3/presence/connectionmanager.py tests/test_connectionmanager.py; echo "pyflakes(changed files) rc=$?"
+          python3 -m pyflakes src tests || echo "pyflakes whole tree rc=$? (pre-existing)"
+          python3 -m pycodestyle src/sugar3/presence/connectionmanager.py tests/test_connectionmanager.py; echo "pycodestyle(changed files) rc=$?"
+          export NO_AT_BRIDGE=1
+          xvfb-run -a python3 -m sugar3.test.discover $PWD/tests 2>&1 | tee /tmp/fix.log | tail -60
           echo "RESULT_FIX=$(grep -E '^(OK|FAILED)' /tmp/fix.log)"
           grep -E "test_connectionmanager|skipped" /tmp/fix.log || true
       - name: Test without the fix (baseline)
@@ -38,5 +40,6 @@ jobs:
         run: |
           git show 8af47b9:src/sugar3/presence/connectionmanager.py > src/sugar3/presence/connectionmanager.py
           export PYTHONPATH=$PWD/src
-          xvfb-run -a python3 -m sugar3.test.discover $PWD/tests 2>&1 | tee /tmp/base.log | tail -30
+          export NO_AT_BRIDGE=1
+          xvfb-run -a python3 -m sugar3.test.discover $PWD/tests 2>&1 | tee /tmp/base.log | tail -60
           echo "RESULT_BASE=$(grep -E '^(OK|FAILED)' /tmp/base.log)"
