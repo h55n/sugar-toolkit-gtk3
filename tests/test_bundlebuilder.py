@@ -88,7 +88,7 @@ class TestGit(unittest.TestCase):
         stripped_filenames = self._strip_root_dir(filenames)
         expected = self._source_files[:]
         expected.extend(self._get_all_locale_files())
-        self.assertItemsEqual(stripped_filenames, expected)
+        self.assertCountEqual(stripped_filenames, expected)
 
         os.chdir(cwd)
 
@@ -103,7 +103,7 @@ class TestGit(unittest.TestCase):
         filenames = tarfile.open(name=xo_path, mode="r:bz2").getnames()
 
         stripped_filenames = self._strip_root_dir(filenames)
-        self.assertItemsEqual(stripped_filenames, self._source_files)
+        self.assertCountEqual(stripped_filenames, self._source_files)
 
         os.chdir(cwd)
 
@@ -121,7 +121,7 @@ class TestGit(unittest.TestCase):
             rel_root = root[len(build_path) + 1:]
             filenames.extend([os.path.join(rel_root, name) for name in files])
 
-        self.assertItemsEqual(filenames, self._get_all_locale_files())
+        self.assertCountEqual(filenames, self._get_all_locale_files())
 
         os.chdir(cwd)
 
@@ -175,7 +175,7 @@ class TestGit(unittest.TestCase):
         expected = self._source_files[:]
         expected.extend(self._activity_locale_files)
 
-        self.assertItemsEqual(filenames, expected)
+        self.assertCountEqual(filenames, expected)
 
         filenames = []
         share_dir = os.path.join(install_path, "share")
@@ -186,7 +186,7 @@ class TestGit(unittest.TestCase):
                 if "org.sugarlabs.Sample" in name:
                     filenames.append(os.path.join(rel_root, name))
 
-        self.assertItemsEqual(filenames, self._share_locale_files)
+        self.assertCountEqual(filenames, self._share_locale_files)
 
         os.chdir(cwd)
 
