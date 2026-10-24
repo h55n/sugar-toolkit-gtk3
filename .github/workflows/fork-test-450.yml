@@ -1,7 +1,7 @@
 name: Fork baseline py3 experiment
 on:
   push:
-    branches: [ci-test-baseline]
+    branches: [ci-test-combined]
   workflow_dispatch:
 jobs:
   test:
