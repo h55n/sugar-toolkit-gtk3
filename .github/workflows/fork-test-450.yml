@@ -23,23 +23,17 @@ jobs:
           sed -i 's/72/69/g' configure.ac
           ./autogen.sh --with-python3
           make
-      - name: Test with the fix (make test steps)
-        id: fix
-        continue-on-error: true
+      - name: Test with the fix
         run: |
-          export PYTHONPATH=$PWD/src
+          export PYTHONPATH=$PWD/src NO_AT_BRIDGE=1
           python3 -m pyflakes src/sugar3/presence/connectionmanager.py tests/test_connectionmanager.py; echo "pyflakes(changed files) rc=$?"
-          python3 -m pyflakes src tests || echo "pyflakes whole tree rc=$? (pre-existing)"
           python3 -m pycodestyle src/sugar3/presence/connectionmanager.py tests/test_connectionmanager.py; echo "pycodestyle(changed files) rc=$?"
-          export NO_AT_BRIDGE=1
-          xvfb-run -a python3 -m sugar3.test.discover $PWD/tests 2>&1 | tee /tmp/fix.log | tail -60
-          echo "RESULT_FIX=$(grep -E '^(OK|FAILED)' /tmp/fix.log)"
-          grep -E "test_connectionmanager|skipped" /tmp/fix.log || true
+          # test_uitree aborts the whole runner here (needs the AT-SPI bus), run the other modules
+          xvfb-run -a python3 -m unittest -v tests.test_mime tests.test_bundle tests.test_bundlebuilder tests.test_connectionmanager 2>&1 | grep -E "^(test_|Ran |OK|FAILED|ERROR|FAIL)" | tee /tmp/fix.log | tail -45
+          echo "RESULT_FIX: $(grep -E '^(OK|FAILED)' /tmp/fix.log)"
       - name: Test without the fix (baseline)
-        continue-on-error: true
         run: |
           git show 8af47b9:src/sugar3/presence/connectionmanager.py > src/sugar3/presence/connectionmanager.py
-          export PYTHONPATH=$PWD/src
-          export NO_AT_BRIDGE=1
-          xvfb-run -a python3 -m sugar3.test.discover $PWD/tests 2>&1 | tee /tmp/base.log | tail -60
-          echo "RESULT_BASE=$(grep -E '^(OK|FAILED)' /tmp/base.log)"
+          export PYTHONPATH=$PWD/src NO_AT_BRIDGE=1
+          xvfb-run -a python3 -m unittest -v tests.test_mime tests.test_bundle tests.test_bundlebuilder tests.test_connectionmanager 2>&1 | grep -E "^(test_|Ran |OK|FAILED|ERROR|FAIL)" | tee /tmp/base.log | tail -45
+          echo "RESULT_BASE: $(grep -E '^(OK|FAILED)' /tmp/base.log)"
