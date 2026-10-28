@@ -1,5 +1,7 @@
 name: Issue 450 real-dependency proof
 on:
+  push:
+    branches: [test-450-real-deps-oct28]
   workflow_dispatch:
 permissions:
   contents: read
