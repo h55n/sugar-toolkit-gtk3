@@ -1,0 +1,32 @@
+name: Issue 450 real-dependency proof
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prove:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install real dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi python3-dbus python3-cairo python3-gi-cairo python3-decorator python3-dateutil gir1.2-gtk-3.0 gir1.2-telepathyglib-0.12 gir1.2-sugarext-1.0 gir1.2-atspi-2.0 at-spi2-core gettext shared-mime-info xvfb dbus-x11 zip
+      - name: Prepare local configuration and MIME
+        run: |
+          sed 's|@prefix@|/usr|g' src/sugar3/config.py.in > src/sugar3/config.py
+          mkdir -p "$HOME/.local/share/mime/packages"
+          cat > "$HOME/.local/share/mime/packages/sugar-test.xml" <<'XML'
+          <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info"><mime-type type="application/vnd.olpc-sugar"><glob pattern="*.xo"/></mime-type><mime-type type="application/vnd.olpc-content"><glob pattern="*.xol"/></mime-type></mime-info>
+          XML
+          update-mime-database "$HOME/.local/share/mime"
+      - name: Real baseline and fixed evidence
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD/src"
+          python3 proof/verify_matrix.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-dependency-matrix
+          path: proof/logs/

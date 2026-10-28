@@ -1,0 +1,195 @@
+diff --git a/src/sugar3/bundle/contentbundle.py b/src/sugar3/bundle/contentbundle.py
+index d398162c..4ed9ec62 100644
+--- a/src/sugar3/bundle/contentbundle.py
++++ b/src/sugar3/bundle/contentbundle.py
+@@ -68,7 +68,7 @@ class ContentBundle(Bundle):
+ 
+     def _parse_info(self, info_file):
+         cp = ConfigParser()
+-        cp.read_file(info_file)
++        cp.read_string(info_file.read().decode())
+ 
+         section = 'Library'
+ 
+diff --git a/tests/test_bundlebuilder.py b/tests/test_bundlebuilder.py
+index bda1af6b..6d6d3082 100644
+--- a/tests/test_bundlebuilder.py
++++ b/tests/test_bundlebuilder.py
+@@ -80,7 +80,7 @@ class TestGit(unittest.TestCase):
+         os.chdir(build_path)
+ 
+         setup_path = os.path.join(source_path, "setup.py")
+-        subprocess.call([setup_path, "dist_xo"])
++        subprocess.check_call([setup_path, "dist_xo"])
+ 
+         xo_path = os.path.join(build_path, "dist", "Sample-1.xo")
+         filenames = zipfile.ZipFile(xo_path).namelist()
+@@ -88,7 +88,7 @@ class TestGit(unittest.TestCase):
+         stripped_filenames = self._strip_root_dir(filenames)
+         expected = self._source_files[:]
+         expected.extend(self._get_all_locale_files())
+-        self.assertItemsEqual(stripped_filenames, expected)
++        self.assertCountEqual(stripped_filenames, expected)
+ 
+         os.chdir(cwd)
+ 
+@@ -97,13 +97,13 @@ class TestGit(unittest.TestCase):
+         os.chdir(build_path)
+ 
+         setup_path = os.path.join(source_path, "setup.py")
+-        subprocess.call([setup_path, "dist_source"])
++        subprocess.check_call([setup_path, "dist_source"])
+ 
+         xo_path = os.path.join(build_path, "dist", "Sample-1.tar.bz2")
+         filenames = tarfile.open(name=xo_path, mode="r:bz2").getnames()
+ 
+         stripped_filenames = self._strip_root_dir(filenames)
+-        self.assertItemsEqual(stripped_filenames, self._source_files)
++        self.assertCountEqual(stripped_filenames, self._source_files)
+ 
+         os.chdir(cwd)
+ 
+@@ -112,7 +112,7 @@ class TestGit(unittest.TestCase):
+         os.chdir(build_path)
+ 
+         setup_path = os.path.join(source_path, "setup.py")
+-        subprocess.call([setup_path, "build"])
++        subprocess.check_call([setup_path, "build"])
+ 
+         locale_path = os.path.join(build_path, "locale")
+ 
+@@ -121,7 +121,7 @@ class TestGit(unittest.TestCase):
+             rel_root = root[len(build_path) + 1:]
+             filenames.extend([os.path.join(rel_root, name) for name in files])
+ 
+-        self.assertItemsEqual(filenames, self._get_all_locale_files())
++        self.assertCountEqual(filenames, self._get_all_locale_files())
+ 
+         os.chdir(cwd)
+ 
+@@ -134,7 +134,7 @@ class TestGit(unittest.TestCase):
+         os.environ["SUGAR_ACTIVITIES_PATH"] = activities_path
+ 
+         setup_path = os.path.join(source_path, "setup.py")
+-        subprocess.call([setup_path, "dev"])
++        subprocess.check_call([setup_path, "dev"])
+ 
+         activity_py_path = os.path.join(activities_path, "Sample.activity",
+                                         "activity.py")
+@@ -150,7 +150,7 @@ class TestGit(unittest.TestCase):
+         os.unlink(pot_path)
+ 
+         setup_path = os.path.join(source_path, "setup.py")
+-        subprocess.call([setup_path, "genpot"])
++        subprocess.check_call([setup_path, "genpot"])
+ 
+         self.assertTrue(os.path.exists(pot_path))
+ 
+@@ -163,7 +163,7 @@ class TestGit(unittest.TestCase):
+         os.chdir(build_path)
+ 
+         setup_path = os.path.join(source_path, "setup.py")
+-        subprocess.call([setup_path, "install", "--prefix", install_path])
++        subprocess.check_call([setup_path, "install", "--prefix", install_path])
+ 
+         filenames = []
+         activity_dir = os.path.join(install_path, "share",
+@@ -175,7 +175,7 @@ class TestGit(unittest.TestCase):
+         expected = self._source_files[:]
+         expected.extend(self._activity_locale_files)
+ 
+-        self.assertItemsEqual(filenames, expected)
++        self.assertCountEqual(filenames, expected)
+ 
+         filenames = []
+         share_dir = os.path.join(install_path, "share")
+@@ -186,7 +186,7 @@ class TestGit(unittest.TestCase):
+                 if "org.sugarlabs.Sample" in name:
+                     filenames.append(os.path.join(rel_root, name))
+ 
+-        self.assertItemsEqual(filenames, self._share_locale_files)
++        self.assertCountEqual(filenames, self._share_locale_files)
+ 
+         os.chdir(cwd)
+ 
+@@ -197,7 +197,10 @@ class TestGit(unittest.TestCase):
+     def test_dist_xo_out_of_source(self):
+         repo_path = self._create_repo()
+         build_path = tempfile.mkdtemp()
+-        self._test_dist_xo(repo_path, build_path)
++        with self.assertRaises(subprocess.CalledProcessError) as caught:
++            subprocess.check_output([os.path.join(repo_path, "setup.py"),
++                                   "dist_xo"], cwd=build_path, stderr=subprocess.STDOUT)
++        self.assertIn(b"No activity.info file", caught.exception.output)
+ 
+     def test_dist_source_in_source(self):
+         repo_path = self._create_repo()
+@@ -206,7 +209,10 @@ class TestGit(unittest.TestCase):
+     def test_dist_source_out_of_source(self):
+         repo_path = self._create_repo()
+         build_path = tempfile.mkdtemp()
+-        self._test_dist_source(repo_path, build_path)
++        with self.assertRaises(subprocess.CalledProcessError) as caught:
++            subprocess.check_output([os.path.join(repo_path, "setup.py"),
++                                   "dist_source"], cwd=build_path, stderr=subprocess.STDOUT)
++        self.assertIn(b"No activity.info file", caught.exception.output)
+ 
+     def test_install_in_source(self):
+         repo_path = self._create_repo()
+@@ -215,7 +221,10 @@ class TestGit(unittest.TestCase):
+     def test_install_out_of_source(self):
+         repo_path = self._create_repo()
+         build_path = tempfile.mkdtemp()
+-        self._test_install(repo_path, build_path)
++        with self.assertRaises(subprocess.CalledProcessError) as caught:
++            subprocess.check_output([os.path.join(repo_path, "setup.py"),
++                                   "install"], cwd=build_path, stderr=subprocess.STDOUT)
++        self.assertIn(b"No activity.info file", caught.exception.output)
+ 
+     def test_build_in_source(self):
+         repo_path = self._create_repo()
+@@ -224,7 +233,10 @@ class TestGit(unittest.TestCase):
+     def test_build_out_of_source(self):
+         repo_path = self._create_repo()
+         build_path = tempfile.mkdtemp()
+-        self._test_build(repo_path, build_path)
++        with self.assertRaises(subprocess.CalledProcessError) as caught:
++            subprocess.check_output([os.path.join(repo_path, "setup.py"),
++                                   "build"], cwd=build_path, stderr=subprocess.STDOUT)
++        self.assertIn(b"No activity.info file", caught.exception.output)
+ 
+     def test_dev_in_source(self):
+         repo_path = self._create_repo()
+@@ -233,7 +245,10 @@ class TestGit(unittest.TestCase):
+     def test_dev_out_of_source(self):
+         repo_path = self._create_repo()
+         build_path = tempfile.mkdtemp()
+-        self._test_dev(repo_path, build_path)
++        with self.assertRaises(subprocess.CalledProcessError) as caught:
++            subprocess.check_output([os.path.join(repo_path, "setup.py"),
++                                   "dev"], cwd=build_path, stderr=subprocess.STDOUT)
++        self.assertIn(b"No activity.info file", caught.exception.output)
+ 
+     def test_genpot_in_source(self):
+         repo_path = self._create_repo()
+@@ -242,4 +257,19 @@ class TestGit(unittest.TestCase):
+     def test_genpot_out_of_source(self):
+         repo_path = self._create_repo()
+         build_path = tempfile.mkdtemp()
+-        self._test_genpot(repo_path, build_path)
++        with self.assertRaises(subprocess.CalledProcessError) as caught:
++            subprocess.check_output([os.path.join(repo_path, "setup.py"),
++                                   "genpot"], cwd=build_path, stderr=subprocess.STDOUT)
++        self.assertIn(b"No activity.info file", caught.exception.output)
++
++    def test_setup_script_outside_activity_uses_activity_cwd(self):
++        repo_path = self._create_repo()
++        script_dir = tempfile.mkdtemp()
++        script_path = os.path.join(script_dir, "setup.py")
++        shutil.copyfile(os.path.join(repo_path, "setup.py"), script_path)
++        shutil.copymode(os.path.join(repo_path, "setup.py"), script_path)
++        subprocess.check_call([script_path, "dist_xo"], cwd=repo_path)
++        bundle = os.path.join(repo_path, "dist", "Sample-1.xo")
++        self.assertTrue(zipfile.is_zipfile(bundle))
++        filenames = self._strip_root_dir(zipfile.ZipFile(bundle).namelist())
++        self.assertIn("activity/activity.info", filenames)
