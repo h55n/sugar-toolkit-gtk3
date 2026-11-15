@@ -26,7 +26,7 @@ import -window root "$EVIDENCE/01-sugar-home.png"
 sugar-launch org.laptop.Terminal > "$EVIDENCE/terminal-launch.log" 2>&1 &
 sleep 15
 xdotool search --onlyvisible --name 'Terminal' getwindowname | tee "$EVIDENCE/terminal-window.txt"
-xdotool mousemove 990 28
+xdotool mousemove 943 28
 sleep 3
 import -window root "$EVIDENCE/02-stop-at-1024.png"
 xdotool mousemove 500 400
@@ -35,6 +35,6 @@ xrandr -q | tee "$EVIDENCE/xrandr-before.txt"
 xrandr --output default --mode 1280x720
 sleep 5
 xrandr -q | tee "$EVIDENCE/xrandr-after.txt"
-xdotool mousemove 1248 28
+xdotool mousemove 1199 28
 sleep 3
 import -window root "$EVIDENCE/03-stop-at-1280.png"
