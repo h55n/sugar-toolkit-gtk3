@@ -5,7 +5,8 @@ on:
     branches: [ci/real-sugar-desktop]
 jobs:
   desktop:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    container: ubuntu:26.04
     strategy:
       fail-fast: false
       matrix:
@@ -16,8 +17,8 @@ jobs:
           fetch-depth: 0
       - name: Install complete Sugar desktop and build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential autoconf automake libtool python3-all-dev libgtk-3-dev libgdk-pixbuf2.0-dev libsm-dev libice-dev librsvg2-dev libxfixes-dev libxi-dev libx11-dev gettext intltool libxml-parser-perl x11proto-core-dev libasound2-dev libgirepository1.0-dev gir1.2-sugarext-1.0 python3-decorator python3-dateutil python3-gi-cairo gir1.2-telepathyglib-0.12 xvfb dbus-x11 at-spi2-core python3-pyatspi sugar-session sugar-terminal-activity sugar-themes python3-carquinyol xserver-xephyr xdotool imagemagick
+          apt-get update
+          apt-get install -y ca-certificates curl git sudo build-essential autoconf automake libtool python3-all-dev libgtk-3-dev libgdk-pixbuf-2.0-dev libsm-dev libice-dev librsvg2-dev libxfixes-dev libxi-dev libx11-dev gettext intltool libxml-parser-perl x11proto-core-dev libasound2-dev libgirepository1.0-dev gir1.2-sugarext-1.0 python3-decorator python3-dateutil python3-gi-cairo gir1.2-telepathyglib-0.12 xvfb dbus-x11 at-spi2-core python3-pyatspi sugar-session sugar-terminal-activity sugar-themes python3-carquinyol xserver-xephyr xdotool imagemagick
       - name: Install required Autoconf 2.72
         run: |
           curl -fSL --retry 3 https://ftp.gnu.org/gnu/autoconf/autoconf-2.72.tar.xz -o /tmp/autoconf.tar.xz
@@ -33,11 +34,14 @@ jobs:
         run: |
           ./autogen.sh --prefix=/usr --with-python3
           make -j2
-          sudo make install
+          make install
       - name: Real desktop and Terminal activity reproduction
         env:
           EVIDENCE: ${{ github.workspace }}/desktop-evidence-${{ matrix.variant }}
-        run: dbus-run-session -- bash ci/real-desktop.sh
+        run: |
+          useradd -m -s /bin/bash sugar
+          chown -R sugar:sugar "$GITHUB_WORKSPACE"
+          runuser -u sugar -- env HOME=/home/sugar EVIDENCE="$EVIDENCE" dbus-run-session -- bash ci/real-desktop.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
