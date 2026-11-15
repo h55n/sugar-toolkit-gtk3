@@ -32,7 +32,7 @@ import -window root "$EVIDENCE/02-stop-at-1024.png"
 xdotool mousemove 500 400
 sleep 1
 xrandr -q | tee "$EVIDENCE/xrandr-before.txt"
-xrandr --output default --mode 1280x720
+xrandr --output default --mode 1280x960
 sleep 5
 xrandr -q | tee "$EVIDENCE/xrandr-after.txt"
 xdotool mousemove 1199 28

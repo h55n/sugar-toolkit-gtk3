@@ -32,7 +32,7 @@ jobs:
           echo "$HOME/autoconf-2.72/bin" >> "$GITHUB_PATH"
       - name: Select original palette for before case
         if: matrix.variant == 'before'
-        run: git show f14c100:src/sugar3/graphics/palettewindow.py > src/sugar3/graphics/palettewindow.py
+        run: git -c safe.directory="$PWD" show f14c100:src/sugar3/graphics/palettewindow.py > src/sugar3/graphics/palettewindow.py
       - name: Build and install native toolkit
         run: |
           ./autogen.sh --prefix=/usr --with-python3
