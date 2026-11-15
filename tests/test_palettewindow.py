@@ -7,11 +7,13 @@ import unittest
 from unittest.mock import patch
 
 import gi
+
+# Select the GTK 3 bindings before importing them or the toolkit.
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
-from gi.repository import Gdk, Gtk
+from gi.repository import Gdk, Gtk  # noqa: E402
 
-from sugar3.graphics.palettewindow import Invoker
+from sugar3.graphics.palettewindow import Invoker  # noqa: E402
 
 
 class RectangleInvoker(Invoker):
